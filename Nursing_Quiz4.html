@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Fundamentals of Nursing — 50 Question Practice Quiz</title>
+<style>
+  :root{--accent:#2563eb;--ok:#16a34a;--bad:#dc2626;--bg:#f7f7fb;--card:#fff}
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);margin:0;padding:22px;color:#111}
+  .wrap{max-width:980px;margin:0 auto;background:var(--card);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.08);padding:20px}
+  h1{margin:0 0 6px;font-size:22px}
+  .meta{color:#4b5563;margin-bottom:12px}
+  .progress{height:10px;background:#e6eefc;border-radius:999px;overflow:hidden;margin:10px 0 16px}
+  .bar{height:100%;width:0;background:linear-gradient(90deg,#60a5fa,#2563eb)}
+  .qnum{font-weight:700;color:#111;margin-bottom:6px}
+  .question{font-size:18px;line-height:1.5;margin-bottom:12px}
+  .options{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+  .opt{display:flex;align-items:flex-start;gap:10px;border:1px solid #eef2ff;padding:10px;border-radius:10px;background:#fbfdff}
+  .opt:hover{border-color:#cfe6ff}
+  input[type="radio"],input[type="checkbox"]{transform:scale(1.2);margin-top:3px}
+  .controls{margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  button{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
+  button.ghost{background:#f1f5f9;color:#111;box-shadow:none}
+  #feedback{margin-top:12px;font-weight:700}
+  #feedback.good{color:var(--ok)}
+  #feedback.bad{color:var(--bad)}
+  details{background:#f8fafc;border:1px solid #eef2ff;border-radius:10px;padding:10px;margin-top:10px}
+  summary{cursor:pointer;font-weight:700}
+  table{width:100%;border-collapse:collapse;margin-top:16px}
+  th,td{border:1px solid #e6eefc;padding:8px;text-align:left;vertical-align:top}
+  th{background:#f1f5f9}
+  .muted{color:#6b7280}
+  .tag{display:inline-block;background:#eef2ff;color:#0369a1;padding:4px 8px;border-radius:999px;font-weight:700;margin-left:8px}
+</style>
+</head>
+<body>
+<div class="wrap" role="main">
+  <h1>Fundamentals of Nursing — 50-Question Practice</h1>
+  <div class="meta">Randomized order • Single-answer & SATA supported • Instant feedback + rationale • Shareable as an HTML file or upload to Netlify</div>
+
+  <div class="progress" aria-hidden="true"><div class="bar" id="bar"></div></div>
+
+  <div class="qnum" id="qnum"></div>
+  <div class="question" id="question"></div>
+  <ul class="options" id="options" aria-live="polite"></ul>
+
+  <div id="feedback" aria-live="polite"></div>
+
+  <details id="rationaleBox" style="display:none">
+    <summary>Show rationale / explanation</summary>
+    <div id="rationale" class="muted"></div>
+  </details>
+
+  <div class="controls">
+    <button id="submitBtn">Submit</button>
+    <button id="nextBtn" style="display:none">Next</button>
+    <button id="restartBtn" class="ghost" style="display:none">Restart</button>
+    <span id="typeTag" class="tag" aria-hidden="true"></span>
+  </div>
+
+  <div id="score" style="font-weight:800;margin-top:12px"></div>
+  <div id="review"></div>
+</div>
+
+<script>
+/* -- Questions (45 provided + 5 dosage calcs = 50) --
+   Each entry: { q: "...", a: [...], correct: [indices], type: "single"|"multi", rationale: "..." }
+*/
+const baseQuestions = [
+/* Chapter 20: Asepsis & Preventing Infection (10) */
+{ q:"A nurse is donning PPE before entering the room of a patient with C. difficile. Which sequence is correct?",
+  a:["Gown → Mask → Goggles → Gloves","Mask → Goggles → Gown → Gloves","Gown → Gloves → Goggles → Mask","Gloves → Gown → Goggles → Mask"],
+  correct:[0], type:"single",
+  rationale:"CDC recommends donning: gown, mask/respirator, goggles/face shield, then gloves. Gloves are donned last to avoid contaminating other PPE."},
+{ q:"The nurse identifies the portal of exit in the chain of infection as which of the following?",
+  a:["Intact skin","Mucous membranes","Contaminated wound drainage","Susceptible host"],
+  correct:[2], type:"single",
+  rationale:"Portal of exit = path organisms use to exit the reservoir (e.g., blood, sputum, wound drainage)."},
+{ q:"A patient is on airborne precautions for TB. Which action by the nurse indicates a breach in infection control?",
+  a:["Wearing an N95 respirator","Leaving the door closed at all times","Allowing the patient to leave the room wearing a standard surgical mask","Removing gloves before leaving the room but keeping the gown on"],
+  correct:[3], type:"single",
+  rationale:"All PPE must be removed before leaving; keeping gown on contaminates hallway and staff. TB requires N95 and negative-pressure room."},
+{ q:"A nurse observes a UAP taking vital signs on a neutropenic patient after just assisting a C. difficile patient. What is the nurse’s best action?",
+  a:["Remind the UAP to wash hands with soap and water before contact","Allow the UAP to finish since gloves are being worn","Notify infection control","Report the UAP to the nurse manager immediately"],
+  correct:[0], type:"single",
+  rationale:"Soap & water hand hygiene is required for C. difficile; correcting and educating the UAP is appropriate first action."},
+{ q:"During central line dressing change, the nurse drops the sterile gauze on the bed. What should the nurse do?",
+  a:["Use the gauze if the bed linens appear clean","Continue without gauze to maintain sterility","Obtain a new sterile gauze","Ask another nurse to finish the procedure"],
+  correct:[2], type:"single",
+  rationale:"A sterile item that touches an unsterile surface is contaminated and must be replaced."},
+{ q:"Which patient requires contact precautions?",
+  a:["TB","Influenza","MRSA wound infection","Varicella"],
+  correct:[2], type:"single",
+  rationale:"MRSA wound infections are contact precautions. TB and varicella are airborne (varicella also requires contact); influenza is droplet."},
+{ q:"A post-op patient develops a fever on day 3. Which action should the nurse take first?",
+  a:["Administer antipyretics","Notify the provider of possible surgical infection","Assess the surgical site and drainage","Place the patient in isolation"],
+  correct:[2], type:"single",
+  rationale:"Assessment (inspect surgical site/drainage) comes before interventions or notifying provider."},
+{ q:"Select all that apply: Which actions break the chain of infection at the 'mode of transmission'?",
+  a:["Hand hygiene","Covering coughs and sneezes","Vaccination","PPE use","Disposing of contaminated dressings properly"],
+  correct:[0,3,4], type:"multi",
+  rationale:"Hand hygiene, PPE use, and proper disposal of contaminated dressings interrupt transmission. Covering coughs addresses portal of exit; vaccination addresses susceptible host."},
+{ q:"A patient asks, “Why do I need antibiotics if I feel better?” The nurse’s best response is:",
+  a:["You can stop if you feel well.","Finishing your antibiotics prevents resistance.","Your doctor wants you to finish them no matter what.","Antibiotics help your fever go away."],
+  correct:[1], type:"single",
+  rationale:"Stopping early increases risk of resistance and relapse; finishing prescribed course is evidence-based."},
+{ q:"The nurse is preparing to insert a Foley catheter. Which step maintains surgical asepsis?",
+  a:["Opening the kit on the overbed table after cleaning with an alcohol wipe","Placing sterile gloves on the overbed table before donning","Reaching over the sterile field to adjust supplies","Allowing sterile gloves to touch the bed sheet"],
+  correct:[0], type:"single",
+  rationale:"Open the sterile kit on a clean, dry surface; avoid reaching over the field or touching sterile gloves to unsterile surfaces."},
+
+/* Chapter 3: The Nursing Process (9) */
+{ q:"A patient reports pain but refuses analgesics. Which step of the nursing process should guide the nurse’s next action?",
+  a:["Assessment","Planning","Implementation","Evaluation"],
+  correct:[0], type:"single",
+  rationale:"Reassess and gather more information (why refuse) — assessment first."},
+{ q:"Which nursing diagnosis is most appropriate for a patient refusing meals and losing weight?",
+  a:["Risk for Infection","Imbalanced Nutrition: Less than Body Requirements","Ineffective Coping","Activity Intolerance"],
+  correct:[1], type:"single",
+  rationale:"The data (refusal to eat and weight loss) supports Imbalanced Nutrition < Body Requirements."},
+{ q:"The nurse implements a fall prevention plan. What step comes immediately after implementation?",
+  a:["Diagnosis","Planning","Evaluation","Assessment"],
+  correct:[2], type:"single",
+  rationale:"After implementing interventions, nurse evaluates outcomes."},
+{ q:"A nurse is caring for a patient with COPD who is short of breath. Which action demonstrates the implementation phase?",
+  a:["Monitoring oxygen saturation","Planning oxygen therapy","Administering prescribed bronchodilator","Writing “Ineffective Breathing Pattern”"],
+  correct:[2], type:"single",
+  rationale:"Implementation is carrying out interventions — giving the bronchodilator."},
+{ q:"The nurse determines that a care goal was not met. Which step follows?",
+  a:["Discontinue the plan of care","Revise the interventions","Notify the provider immediately","Continue without change"],
+  correct:[1], type:"single",
+  rationale:"Revise interventions or goals based on evaluation; don’t simply discontinue."},
+{ q:"A nurse collects vital signs and pain level before medication. Which phase of the nursing process is this?",
+  a:["Assessment","Diagnosis","Implementation","Evaluation"],
+  correct:[0], type:"single",
+  rationale:"Collecting data is assessment."},
+{ q:"Which is the best written goal statement for a patient with insomnia?",
+  a:["Patient will sleep well tonight.","Patient will verbalize feeling rested.","Patient will report 6 hours of sleep within 1 week.","Patient will have no sleep problems."],
+  correct:[2], type:"single",
+  rationale:"Specific, measurable, time-bound — 6 hours within 1 week."},
+{ q:"The nurse prioritizes care for a patient with shortness of breath before assisting with hygiene. Which principle is being applied?",
+  a:["Maslow’s hierarchy","Delegation","Evaluation","Documentation"],
+  correct:[0], type:"single",
+  rationale:"Maslow: physiologic needs (airway/breathing) are prioritized."},
+{ q:"A nurse reassesses blood pressure after antihypertensive administration. This reflects which step?",
+  a:["Planning","Evaluation","Diagnosis","Implementation"],
+  correct:[1], type:"single",
+  rationale:"Reassessing effectiveness after an intervention is evaluation."},
+
+/* Chapter 18: Measuring Vital Signs (5) */
+{ q:"The nurse finds an O2 sat of 88% on a patient receiving oxygen. Which action is most appropriate?",
+  a:["Increase oxygen without order","Reassess the pulse oximeter placement and patient condition","Immediately notify provider","Remove oxygen and reassess"],
+  correct:[1], type:"single",
+  rationale:"Validate the reading (probe placement, poor perfusion) and assess the patient before changing therapy."},
+{ q:"Which patient should be assessed first based on vital signs?",
+  a:["Temp 100.8°F, pulse 82","BP 168/90, no symptoms","Pulse 128, dizzy and pale","Respirations 22, oxygen sat 98%"],
+  correct:[2], type:"single",
+  rationale:"Symptomatic tachycardia with dizziness & pallor indicates potential instability — highest priority."},
+{ q:"The nurse auscultates irregular heart rhythm. What should be done next?",
+  a:["Count radial pulse for 30 seconds","Assess apical pulse for 1 full minute","Document as irregular and move on","Ask another nurse to check"],
+  correct:[1], type:"single",
+  rationale:"Assess apical pulse for a full minute when rhythm irregular for accuracy."},
+{ q:"Which factor would likely cause a false low blood pressure reading?",
+  a:["Cuff too large","Cuff too small","Arm below heart level","Patient anxious"],
+  correct:[0], type:"single",
+  rationale:"An oversized cuff gives a falsely low reading."},
+{ q:"Select all that apply: Which can affect temperature readings?",
+  a:["Drinking hot fluids","Time of day","Recent exercise","Oxygen use","Oral surgery"],
+  correct:[0,1,2,4], type:"multi",
+  rationale:"Hot fluids, diurnal changes, recent exercise, and oral surgery influence temperature. Routine oxygen use does not generally affect core temperature."},
+
+/* Chapter 1: Evolution (3) */
+{ q:"Florence Nightingale is best known for which contribution?",
+  a:["Developing public health nursing","Establishing sanitation and hygiene in military hospitals","Creating nurse licensure exams","Starting advanced practice nursing"],
+  correct:[1], type:"single",
+  rationale:"Nightingale’s key contribution was improving sanitation and hygiene, especially in military hospitals."},
+{ q:"Which nursing model emphasizes adaptation to stressors?",
+  a:["Roy’s Adaptation Model","Orem’s Self-Care Deficit Theory","Watson’s Human Caring Theory","Nightingale’s Environmental Theory"],
+  correct:[0], type:"single",
+  rationale:"Roy's model focuses on adaptation to internal and external stimuli."},
+{ q:"A nurse practicing evidence-based care integrates which 3 components?",
+  a:["Research evidence, clinical expertise, patient preferences","Nurse’s experience, tradition, physician orders","Literature review, hospital policy, intuition","Doctor’s advice, nursing diagnosis, research"],
+  correct:[0], type:"single",
+  rationale:"EBP = best research evidence + clinical expertise + patient values/preferences."},
+
+/* Chapter 8: Wellness & Safety (3) */
+{ q:"Teaching a patient to use sunscreen is which level of prevention?",
+  a:["Primary","Secondary","Tertiary","Palliative"],
+  correct:[0], type:"single",
+  rationale:"Primary prevention aims to prevent disease before it occurs (e.g., sunscreen to prevent skin cancer)."},
+{ q:"A patient with diabetes attends a support group. Which prevention level is this?",
+  a:["Primary","Secondary","Tertiary","Health promotion only"],
+  correct:[2], type:"single",
+  rationale:"Tertiary prevention focuses on managing existing disease to reduce complications and improve functioning."},
+{ q:"A nurse teaching safe storage of cleaning products is targeting which risk group?",
+  a:["Elderly adults","Toddlers and children","Adolescents","Pregnant women"],
+  correct:[1], type:"single",
+  rationale:"Toddlers are at high risk for accidental ingestion/poisoning; safe storage reduces risk."},
+
+/* Chapter 15: Communication (3) */
+{ q:"A patient says, “I don’t think I can handle chemo.” Which response is therapeutic?",
+  a:["Lots of people get through it fine.","Tell me more about your concerns.","Chemo is tough, but you’ll be okay.","Don’t think negative."],
+  correct:[1], type:"single",
+  rationale:"Open-ended, reflective responses invite the patient to express fears and facilitate therapeutic dialogue."},
+{ q:"Which nurse action shows therapeutic communication during silence?",
+  a:["Sitting quietly and maintaining presence","Quickly filling the silence with reassurance","Changing subject to reduce tension","Ignoring the silence"],
+  correct:[0], type:"single",
+  rationale:"Sitting quietly and maintaining presence allows the patient time to process and speak."},
+{ q:"Which nonverbal behavior enhances communication?",
+  a:["Crossing arms","Sitting at eye level","Standing over the patient","Avoiding eye contact"],
+  correct:[1], type:"single",
+  rationale:"Sitting at eye level creates a sense of equality and fosters trust."},
+
+/* Chapter 17: Documenting & Reporting (3) */
+{ q:"Which documentation is most accurate?",
+  a:["Patient appears fine today.","Patient refuses pain meds, states ‘I can tolerate it.’","Patient is noncompliant and lazy.","Patient is resting comfortably."],
+  correct:[1], type:"single",
+  rationale:"Objective, specific statements with direct quotes are accurate and defensible."},
+{ q:"During shift report, which information is essential?",
+  a:["Pending diagnostic tests","Nurse’s opinion of family","Patient’s favorite TV show","Roommate compatibility"],
+  correct:[0], type:"single",
+  rationale:"Pending tests affect patient care and immediate priorities — essential for continuity."},
+{ q:"A provider gives a telephone order for morphine. What is the nurse’s next action?",
+  a:["Document and hang up","Repeat the order back for confirmation","Ask another nurse to verify","Administer without repeat"],
+  correct:[1], type:"single",
+  rationale:"Telephone/verbal orders require read-back for safety and confirmation."},
+
+/* Chapter 21: Promoting Safety (3) */
+{ q:"A confused patient repeatedly tries to climb out of bed. What is the nurse’s first action?",
+  a:["Restrain the patient","Place bed in lowest position and use bed alarm","Administer sedative","Move patient to a private room"],
+  correct:[1], type:"single",
+  rationale:"Use least restrictive interventions first: bed in lowest position, provide bed/alarm, supervision."},
+{ q:"Which action prevents aspiration in a patient with dysphagia?",
+  a:["Position upright during meals","Offer thin liquids","Allow eating while lying flat","Encourage fast eating"],
+  correct:[0], type:"single",
+  rationale:"Upright positioning during feeding reduces aspiration risk; texture modifications as ordered."},
+{ q:"Select all that apply: Which are fall risk factors in older adults?",
+  a:["Orthostatic hypotension","Vision changes","Muscle weakness","High reflex response","Polypharmacy"],
+  correct:[0,1,2,4], type:"multi",
+  rationale:"Orthostatic hypotension, vision changes, weakness, and many medications increase fall risk. 'High reflex response' is not a typical risk factor."},
+
+/* Chapter 2: Clinical Judgment (2) */
+{ q:"The nurse notes subtle confusion in a post-op patient before vitals change. This demonstrates:",
+  a:["Clinical judgment","Implementation","Planning","Diagnosis"],
+  correct:[0], type:"single",
+  rationale:"Noticing subtle cues and anticipating problems are elements of clinical judgment."},
+{ q:"A patient is found cyanotic and unresponsive. What is the nurse’s priority?",
+  a:["Call the provider","Begin airway and breathing assessment","Check medical history","Document findings"],
+  correct:[1], type:"single",
+  rationale:"ABCs come first — airway and breathing assessment (start CPR if indicated)."},
+
+/* Chapter 22: Facilitating Hygiene (2) */
+{ q:"A patient with limited mobility is receiving a bath. Which action ensures safety?",
+  a:["Keep side rails up","Leave call light out of reach","Use very hot water for cleansing","Complete bath as fast as possible"],
+  correct:[0], type:"single",
+  rationale:"Side rails and ensuring call light access protect patient safety during care."},
+{ q:"A patient refuses oral care. The nurse’s best response is:",
+  a:["You must allow me to clean your mouth.","Can you tell me why you don’t want oral care right now?","Skipping once won’t matter.","I’ll just do it while you sleep."],
+  correct:[1], type:"single",
+  rationale:"Open a dialogue to explore reasons; respect autonomy and address barriers."},
+
+/* Chapter 38: Nursing Informatics (1) */
+{ q:"A nurse logs out of the EHR before leaving the workstation. This action demonstrates:",
+  a:["Violation of HIPAA","Correct confidentiality practice","Unnecessary step","Delayed charting"],
+  correct:[1], type:"single",
+  rationale:"Logging out prevents unauthorized access to PHI — correct confidentiality practice."},
+
+/* Chapter 40: Leading & Management (1) */
+{ q:"Which delegation by the charge nurse is appropriate?",
+  a:["Assigning a UAP to perform feeding for a stable stroke patient with swallowing precautions in place",
+     "Asking an LPN to create the initial care plan",
+     "Assigning a new graduate to care independently for a patient on multiple vasopressors",
+     "Having a student nurse give IV push medication unsupervised"],
+  correct:[0], type:"single",
+  rationale:"UAP can assist with feeding for a stable patient under RN supervision and established precautions; the others are unsafe/delegation errors."},
+
+/* ===== 5 Dosage Calculation Questions (mixed: tablets, liquid, mL/hr, gtt/min, weight-based) ===== */
+
+/* 1) Tablets */
+{ q:"Dosage calc: The order is amoxicillin 375 mg PO now. Available: 125 mg tablets. How many tablets will you administer?",
+  a:["2.5 tablets","3 tablets","1.5 tablets","3.5 tablets"],
+  correct:[1], type:"single",
+  rationale:"Step-by-step: divide ordered dose by tablet strength → 375 mg ÷ 125 mg = 3 tablets."},
+
+/* 2) Liquid mg per 5 mL */
+{ q:"Dosage calc: Order acetaminophen 600 mg PO. Available: 200 mg per 5 mL. How many mL will you give?",
+  a:["10 mL","12.5 mL","15 mL","20 mL"],
+  correct:[2], type:"single",
+  rationale:"Step-by-step: Determine how many 200 mg doses in 600 mg → 600 ÷ 200 = 3 doses. Each dose is 5 mL → 3 × 5 mL = 15 mL."},
+
+/* 3) IV mL/hr */
+{ q:"Dosage calc (IV rate): Infuse 1000 mL NS over 8 hours using a pump. What rate (mL/hr) will you set?",
+  a:["100 mL/hr","125 mL/hr","150 mL/hr","175 mL/hr"],
+  correct:[1], type:"single",
+  rationale:"Step-by-step: Total volume / total hours → 1000 mL ÷ 8 hr = 125 mL/hr."},
+
+/* 4) Gravity flow gtt/min with drop factor */
+{ q:"Dosage calc (gravity): Infuse 500 mL LR over 4 hours. Drop factor is 20 gtt/mL. What is the flow rate (gtt/min)?",
+  a:["38 gtt/min","40 gtt/min","42 gtt/min","45 gtt/min"],
+  correct:[2], type:"single",
+  rationale:"Step-by-step: (Volume mL × drop factor gtt/mL) ÷ (time in minutes). (500 × 20) ÷ (4×60) = 10000 ÷ 240 = 41.666 → round to 42 gtt/min."},
+
+/* 5) Weight-based with conversion lb → kg */
+{ q:"Dosage calc (weight-based): Order ketorolac 0.1 mg/kg IM once. Patient weighs 154 lb. Supply: 10 mg/mL. What volume (mL) will you give?",
+  a:["0.5 mL","0.6 mL","0.7 mL","0.8 mL"],
+  correct:[2], type:"single",
+  rationale:"Step-by-step: Convert pounds to kg → 154 lb ÷ 2.2 = 70 kg. Dose = 0.1 mg/kg × 70 kg = 7 mg. Volume = dose ÷ concentration = 7 mg ÷ (10 mg/mL) = 0.7 mL."}
+]; // end baseQuestions
+
+/* --------- Quiz engine --------- */
+function deepClone(obj){ return JSON.parse(JSON.stringify(obj)); }
+let questions = deepClone(baseQuestions);
+function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } }
+shuffle(questions);
+
+/* Prepare: shuffle options per question and map correct indices */
+function prepareQuestion(q){
+  const opts = q.a.map((txt,idx)=>({txt,orig:idx}));
+  shuffle(opts);
+  const newA = opts.map(o=>o.txt);
+  const idxMap = new Map(opts.map((o,newIdx)=>[o.orig,newIdx]));
+  const newCorrect = q.correct.map(oldIdx=>idxMap.get(oldIdx));
+  return {...q, a:newA, correct:newCorrect};
+}
+
+let prepared = questions.map(prepareQuestion);
+let current = 0;
+let score = 0;
+let userAnswers = [];
+
+const qnumEl = document.getElementById('qnum');
+const qEl = document.getElementById('question');
+const optsEl = document.getElementById('options');
+const feedbackEl = document.getElementById('feedback');
+const rationaleBox = document.getElementById('rationaleBox');
+const rationaleEl = document.getElementById('rationale');
+const submitBtn = document.getElementById('submitBtn');
+const nextBtn = document.getElementById('nextBtn');
+const restartBtn = document.getElementById('restartBtn');
+const scoreEl = document.getElementById('score');
+const reviewEl = document.getElementById('review');
+const barEl = document.getElementById('bar');
+const typeTag = document.getElementById('typeTag');
+
+function render(){
+  if(current >= prepared.length) return endQuiz();
+  const q = prepared[current];
+  qnumEl.textContent = `Question ${current+1} of ${prepared.length}`;
+  qEl.textContent = q.q;
+  typeTag.textContent = (q.type==='multi') ? 'SATA (Select all that apply)' : 'Single answer';
+  optsEl.innerHTML = '';
+  feedbackEl.textContent = '';
+  feedbackEl.className = '';
+  rationaleBox.style.display = 'none';
+  rationaleEl.textContent = '';
+  submitBtn.style.display = 'inline-block';
+  nextBtn.style.display = 'none';
+
+  q.a.forEach((optText, i)=>{
+    const li = document.createElement('li');
+    li.className = 'opt';
+    const input = document.createElement('input');
+    input.type = (q.type==='multi') ? 'checkbox' : 'radio';
+    input.name = 'choice';
+    input.value = i;
+    input.id = `opt-${i}`;
+    const label = document.createElement('label');
+    label.htmlFor = `opt-${i}`;
+    label.innerHTML = optText;
+    li.appendChild(input);
+    li.appendChild(label);
+    optsEl.appendChild(li);
+  });
+
+  // update progress bar
+  barEl.style.width = ((current / prepared.length) * 100) + '%';
+}
+
+function arraysEqualAsSets(a,b){
+  if(a.length !== b.length) return false;
+  const A = new Set(a), B = new Set(b);
+  for(const x of A) if(!B.has(x)) return false;
+  return true;
+}
+
+submitBtn.addEventListener('click', ()=>{
+  const q = prepared[current];
+  const inputs = Array.from(document.querySelectorAll('input[name="choice"]'));
+  const chosen = inputs.filter(i=>i.checked).map(i=>parseInt(i.value));
+  if(chosen.length === 0){
+    feedbackEl.textContent = 'Please select at least one answer.';
+    feedbackEl.className = 'bad';
+    return;
+  }
+
+  const correct = (q.type==='multi') ? arraysEqualAsSets(chosen, q.correct) : (chosen[0] === q.correct[0]);
+  if(correct) score++;
+
+  const yourText = chosen.map(i=>q.a[i]);
+  const corrText = q.correct.map(i=>q.a[i]);
+
+  userAnswers.push({
+    qText: q.q,
+    your: yourText,
+    correct: corrText,
+    isCorrect: correct,
+    rationale: q.rationale
+  });
+
+  feedbackEl.textContent = correct ? '✅ Correct!' : '❌ Incorrect!';
+  feedbackEl.className = correct ? 'good' : 'bad';
+
+  rationaleEl.textContent = q.rationale;
+  rationaleBox.style.display = 'block';
+
+  submitBtn.style.display = 'none';
+  nextBtn.style.display = 'inline-block';
+});
+
+nextBtn.addEventListener('click', ()=>{
+  current++;
+  render();
+});
+
+restartBtn.addEventListener('click', ()=>{
+  questions = deepClone(baseQuestions);
+  shuffle(questions);
+  prepared = questions.map(prepareQuestion);
+  current = 0; score = 0; userAnswers = [];
+  reviewEl.innerHTML = ''; scoreEl.textContent = '';
+  restartBtn.style.display = 'none';
+  render();
+});
+
+function endQuiz(){
+  qnumEl.textContent = 'Quiz complete';
+  qEl.textContent = 'You finished the practice quiz.';
+  optsEl.innerHTML = '';
+  submitBtn.style.display = 'none';
+  nextBtn.style.display = 'none';
+  rationaleBox.style.display = 'none';
+  barEl.style.width = '100%';
+
+  const total = prepared.length;
+  const pct = Math.round((score/total)*100);
+  scoreEl.textContent = `Final Score: ${score} / ${total} (${pct}%)`;
+
+  // build review table
+  let html = '<h2>Review</h2><table><tr><th>#</th><th>Question</th><th>Your Answer</th><th>Correct Answer</th><th>Result</th><th>Rationale</th></tr>';
+  userAnswers.forEach((r, i)=>{
+    const your = r.your.length ? r.your.join('; ') : '—';
+    const corr = r.correct.join('; ');
+    html += `<tr><td>${i+1}</td><td>${r.qText}</td><td>${your}</td><td>${corr}</td><td>${r.isCorrect ? '✅' : '❌'}</td><td>${r.rationale}</td></tr>`;
+  });
+  html += '</table>';
+  reviewEl.innerHTML = html;
+  restartBtn.style.display = 'inline-block';
+}
+
+/* initial render */
+render();
+</script>
+</body>
+</html>
